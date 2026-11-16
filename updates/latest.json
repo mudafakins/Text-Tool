@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "build": 1,
+  "url": "https://raw.githubusercontent.com/mudafakins/Text-Tool/main/releases/TextTool-1.0.0.zip",
+  "sha256": "c1cdd2655ad14af13629cd2601bad60f7a0055075f272fa63df1764ab21fa313",
+  "notes": "First release: case conversion, clipboard OCR, history, drag-and-drop and paste, and automatic updates.",
+  "minimumSystemVersion": "14.0"
+}
