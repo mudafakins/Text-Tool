@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import TextToolCore
 
@@ -20,6 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
     private let popover = NSPopover()
     private let model = ClipboardModel()
     private let updater = Updater()
+    private var updateObserver: AnyCancellable?
     private var eventMonitors: [Any] = []
     private var draggedSinceMouseDown = false
     /// True between an outside mouse-down and its mouse-up. The mouse-up of the click that
@@ -29,9 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            let image = NSImage(systemSymbolName: "textformat", accessibilityDescription: "Text Tool")
-            image?.isTemplate = true
-            button.image = image
+            button.image = Self.menuBarIcon(withBadge: false)
             button.target = self
             button.action = #selector(togglePopover(_:))
             button.toolTip = "Text Tool"
@@ -53,11 +53,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
         model.startWatching()
         TextRecognizer.warmUp()
         updater.scheduleAutomaticChecks()
+        // Put a dot on the menu bar icon while an update is waiting.
+        updateObserver = updater.$availableUpdate
+            .map { $0 != nil }
+            .removeDuplicates()
+            .sink { [weak self] hasUpdate in self?.statusItem.button?.image = Self.menuBarIcon(withBadge: hasUpdate) }
 
         // `--show` opens the popover at launch (handy for testing).
         if CommandLine.arguments.contains("--show") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self.togglePopover(nil) }
         }
+    }
+
+    private static func menuBarIcon(withBadge: Bool) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+        guard let symbol = NSImage(systemSymbolName: "textformat", accessibilityDescription: "Text Tool")?
+            .withSymbolConfiguration(config) else { return nil }
+        guard withBadge else {
+            symbol.isTemplate = true
+            return symbol
+        }
+        let size = NSSize(width: symbol.size.width + 4, height: symbol.size.height)
+        let image = NSImage(size: size, flipped: false) { rect in
+            symbol.draw(in: NSRect(x: 0, y: 0, width: symbol.size.width, height: symbol.size.height))
+            let dot = NSRect(x: rect.maxX - 5, y: rect.maxY - 5, width: 5, height: 5)
+            NSColor.black.setFill()
+            NSBezierPath(ovalIn: dot).fill()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "Text Tool, update available"
+        return image
     }
 
     /// Menu bar apps have no visible menu, but key equivalents like ⌘C and ⌘A are

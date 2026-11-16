@@ -85,6 +85,7 @@ struct PopoverView: View {
             Toggle("Launch at Login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in setLaunchAtLogin(enabled) }
             Divider()
+            Text("Text Tool \(updater.currentVersion)")
             Button("Check for Updates…") {
                 Task { await updater.check(userInitiated: true) }
             }
