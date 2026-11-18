@@ -1,8 +1,8 @@
 {
-  "version": "1.0.1",
-  "build": 2,
-  "url": "https://raw.githubusercontent.com/mudafakins/Text-Tool/main/releases/TextTool-1.0.1.zip",
-  "sha256": "2558c76dfb6b25c861fc6636e349c830232eb1ee0e01db92f5b7e6c43092abdb",
-  "notes": "The menu bar icon shows a dot when an update is available, and the settings menu shows the current version.",
+  "version": "1.0.2",
+  "build": 3,
+  "url": "https://raw.githubusercontent.com/mudafakins/Text-Tool/main/releases/TextTool-1.0.2.zip",
+  "sha256": "4cbda0381ea083ca93f881759ff69678abe346a856bd5c4c86ca0530decdd604",
+  "notes": "You can now edit text in the preview. Edits are copied to the clipboard as you type and case buttons apply to the edited text.",
   "minimumSystemVersion": "14.0"
 }
