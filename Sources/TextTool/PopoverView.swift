@@ -160,18 +160,18 @@ struct PopoverView: View {
                         Image(systemName: "exclamationmark.triangle")
                         Text(error)
                     }
-                } else if model.hasText {
+                } else if model.canEdit {
                     // An invisible Text sizes the box (70–180pt); the native text view on top
-                    // handles selection, ⌘A / ⌘C, right-click Copy and scrolling.
-                    Text(model.current)
+                    // handles editing, selection, undo, copy/paste and scrolling.
+                    Text(model.current.isEmpty ? " " : model.current)
                         .font(.system(size: SelectableTextView.fontSize))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(SelectableTextView.inset)
                         .fixedSize(horizontal: false, vertical: true)
                         .hidden()
                         .frame(minHeight: 70, maxHeight: 180, alignment: .top)
-                        .overlay(SelectableTextView(text: model.current))
-                        .help("Select text and press ⌘C to copy part of it")
+                        .overlay(SelectableTextView(text: model.current) { model.edit($0) })
+                        .help("Click to edit. Changes are copied to the clipboard as you type.")
                 } else {
                     placeholder {
                         Image(systemName: "square.and.arrow.down")

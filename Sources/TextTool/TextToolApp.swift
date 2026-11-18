@@ -90,6 +90,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
     /// only delivered through the main menu, so install a (hidden) Edit menu.
     private func installEditMenu() {
         let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
         editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
         editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         let paste = editMenu.addItem(withTitle: "Paste into Text Tool", action: #selector(pasteIntoTextTool(_:)), keyEquivalent: "v")
@@ -103,7 +108,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
         NSApp.mainMenu = mainMenu
     }
 
+    /// ⌘V: while editing the preview, pastes into the text; otherwise takes the clipboard as a new item.
     @objc private func pasteIntoTextTool(_ sender: Any?) {
+        if let textView = NSApp.keyWindow?.firstResponder as? NSTextView, textView.isEditable {
+            textView.pasteAsPlainText(sender)
+            return
+        }
         model.pasteFromClipboard()
         showPopover()
     }
@@ -142,7 +152,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
         NSApp.activate(ignoringOtherApps: true)
         guard !popover.isShown else { return }
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        popover.contentViewController?.view.window?.makeKey()
+        let window = popover.contentViewController?.view.window
+        window?.makeKey()
+        // Start with nothing focused, so ⌘V adds a new item until you click into the text.
+        DispatchQueue.main.async { window?.makeFirstResponder(nil) }
         startMonitors()
     }
 
@@ -198,6 +211,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSDr
     }
 
     func popoverDidClose(_ notification: Notification) {
+        model.flushPendingEdit()
         stopMonitors()
     }
 }

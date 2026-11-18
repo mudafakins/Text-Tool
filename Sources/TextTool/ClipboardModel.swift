@@ -15,7 +15,7 @@ final class ClipboardModel: ObservableObject {
     /// One copied item. `text` is the original (copied text, or OCR result).
     struct Entry: Identifiable {
         let id = UUID()
-        let text: String
+        var text: String
         let image: NSImage?
         var selectedCase: TextCase?
     }
@@ -62,6 +62,9 @@ final class ClipboardModel: ObservableObject {
     /// Bumped whenever new content arrives, so a stale OCR result is discarded.
     private var generation = 0
     private var flashTask: Task<Void, Never>?
+    /// Typed edits are copied to the clipboard shortly after typing pauses.
+    private var editCopyTask: Task<Void, Never>?
+    private var hasPendingEditCopy = false
     private var watchTimer: Timer?
 
     init() {
@@ -193,6 +196,8 @@ final class ClipboardModel: ObservableObject {
     // MARK: - Ingesting
 
     private func resetPendingWork() {
+        editCopyTask?.cancel()
+        hasPendingEditCopy = false
         ocrTask?.cancel()
         generation += 1
         isRecognizing = false
@@ -323,6 +328,45 @@ final class ClipboardModel: ObservableObject {
         setCase(nil)
     }
 
+    // MARK: - Editing
+
+    /// True when the preview shows editable text (not while recognizing, or with nothing loaded).
+    var canEdit: Bool {
+        guard !isRecognizing, errorMessage == nil else { return false }
+        switch source {
+        case .text, .image: return true
+        case .empty, .unsupported: return false
+        }
+    }
+
+    /// Called as the user types in the preview. The edited text becomes the new base for
+    /// case conversions, replaces the item in history, and is copied once typing pauses.
+    func edit(_ text: String) {
+        guard text != current else { return }
+        original = text
+        current = text
+        selectedCase = nil
+        if let index = historyIndex {
+            history[index].text = text
+            history[index].selectedCase = nil
+        }
+        hasPendingEditCopy = true
+        editCopyTask?.cancel()
+        editCopyTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            self?.flushPendingEdit()
+        }
+    }
+
+    /// Copies a not-yet-copied edit right away (e.g. when the popover closes).
+    func flushPendingEdit() {
+        editCopyTask?.cancel()
+        guard hasPendingEditCopy else { return }
+        hasPendingEditCopy = false
+        copyToClipboard(current)
+    }
+
     private func setCase(_ textCase: TextCase?) {
         selectedCase = textCase
         current = textCase.map { CaseConverter.convert(original, to: $0) } ?? original
@@ -331,6 +375,8 @@ final class ClipboardModel: ObservableObject {
     }
 
     private func copyToClipboard(_ text: String) {
+        editCopyTask?.cancel()
+        hasPendingEditCopy = false
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
         handledChangeCount = pasteboard.changeCount
