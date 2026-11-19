@@ -1,8 +1,8 @@
 {
-  "version": "1.0.2",
-  "build": 3,
-  "url": "https://raw.githubusercontent.com/mudafakins/Text-Tool/main/releases/TextTool-1.0.2.zip",
-  "sha256": "4cbda0381ea083ca93f881759ff69678abe346a856bd5c4c86ca0530decdd604",
-  "notes": "You can now edit text in the preview. Edits are copied to the clipboard as you type and case buttons apply to the edited text.",
+  "version": "1.0.3",
+  "build": 4,
+  "url": "https://raw.githubusercontent.com/mudafakins/Text-Tool/main/releases/TextTool-1.0.3.zip",
+  "sha256": "8bc261dfd9b957b35aff087e0ca1ac2802e036cfe0948e6a5927ba651b38b0de",
+  "notes": "Refined design: buttons respond as you press them, larger history and Original controls, and item details shown on the preview card.",
   "minimumSystemVersion": "14.0"
 }

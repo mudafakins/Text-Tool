@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3 (2026-11-19)
+
+Refined design: buttons respond as you press them, larger history and Original controls, and item details shown on the preview card.
+
 ## v1.0.2 (2026-11-18)
 
 You can now edit text in the preview. Edits are copied to the clipboard as you type and case buttons apply to the edited text.
